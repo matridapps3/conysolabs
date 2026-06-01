@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Conyso Bench — Mockup C (hybrid: Conyso chrome + light working area)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  :root {
+    /* Conyso dark chrome */
+    --chrome-bg:   #0a0a0c;
+    --chrome-ink:  #ececec;
+    --chrome-ink-2:#b8b8b8;
+    --chrome-muted:#7c7c80;
+    --chrome-line: rgba(255,255,255,0.08);
+    --chrome-accent:#c5a572;
+
+    /* Light working area (Bill-style) */
+    --bg:        #f7f8fa;
+    --surface:   #ffffff;
+    --surface-2: #f1f3f6;
+    --line:      #e3e6eb;
+    --ink:       #0d1117;
+    --ink-2:     #2c333d;
+    --muted:     #6b7280;
+    --accent:    #1d4ed8;
+    --accent-2:  #1e40af;
+    --accent-bg: #eef2ff;
+    --warn:      #b45309;
+    --warn-bg:   #fff7ed;
+    --bad:       #b42318;
+    --bad-bg:    #fef3f2;
+
+    --radius:    8px;
+    --radius-sm: 6px;
+    --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    --font-body:    ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+    --shadow-sm: 0 1px 2px rgba(13,17,23,0.04), 0 1px 3px rgba(13,17,23,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--ink); font: 14px/1.5 var(--font-body); -webkit-font-smoothing: antialiased; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Dark Conyso chrome ---------- */
+  header {
+    background: var(--chrome-bg);
+    color: var(--chrome-ink);
+    border-bottom: 1px solid var(--chrome-line);
+    padding: 18px 32px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .brand { display: flex; align-items: baseline; gap: 14px; }
+  .brand .mark {
+    font-family: var(--font-display);
+    font-weight: 200; font-size: 22px;
+    letter-spacing: 0.18em;
+    color: var(--chrome-ink);
+  }
+  .brand .sub {
+    font-size: 11px; color: var(--chrome-muted);
+    text-transform: uppercase; letter-spacing: 0.22em;
+    border-left: 1px solid var(--chrome-line); padding-left: 14px;
+  }
+  nav.top { display: flex; gap: 28px; }
+  nav.top a {
+    font-size: 12px; color: var(--chrome-ink-2);
+    text-transform: uppercase; letter-spacing: 0.18em;
+  }
+  nav.top a:hover { color: var(--chrome-accent); text-decoration: none; }
+
+  /* ---------- Light working area ---------- */
+  .shell { display: grid; grid-template-columns: 220px 1fr; min-height: calc(100vh - 130px); }
+  aside {
+    background: var(--surface);
+    border-right: 1px solid var(--line);
+    padding: 18px 12px;
+  }
+  aside h3 { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; margin: 14px 8px 6px; }
+  aside h3:first-child { margin-top: 0; }
+  aside ul { list-style: none; }
+  aside li {
+    padding: 7px 10px; border-radius: var(--radius-sm);
+    color: var(--ink-2); font-size: 13px; cursor: pointer;
+  }
+  aside li:hover { background: var(--surface-2); }
+  aside li.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+
+  main { padding: 28px 36px; }
+  .breadcrumb { color: var(--muted); font-size: 12px; margin-bottom: 6px; }
+  .breadcrumb a { color: var(--muted); }
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 400;
+    font-size: 24px;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+  }
+  .deck { color: var(--muted); font-size: 13px; margin-bottom: 22px; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+  }
+  .card h2 {
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 13px;
+    color: var(--ink-2);
+    margin-bottom: 12px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card h2 .badge {
+    background: var(--warn-bg); color: var(--warn);
+    font-size: 11px; padding: 2px 8px; border-radius: 999px; font-weight: 500;
+  }
+  .chart { background: var(--surface-2); border-radius: 6px; height: 220px; padding: 8px; }
+  .chart svg { display: block; width: 100%; height: 100%; }
+
+  .metrics { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow-sm); }
+  .metric .label { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .metric .value { font-family: var(--font-display); font-weight: 500; font-size: 20px; letter-spacing: -0.01em; }
+  .metric.warn { border-color: #f7c98a; background: var(--warn-bg); }
+  .metric.warn .value { color: var(--warn); }
+  .metric.bad  { border-color: #f4a4a0; background: var(--bad-bg); }
+  .metric.bad  .value { color: var(--bad); }
+
+  .interp {
+    border-left: 3px solid var(--chrome-accent);
+    background: var(--surface);
+    border-radius: 0 var(--radius) var(--radius) 0;
+    padding: 14px 18px;
+    color: var(--ink-2);
+    margin-bottom: 20px;
+    box-shadow: var(--shadow-sm);
+  }
+  .interp .ttl { font-weight: 600; color: var(--ink); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .interp p + p { margin-top: 8px; }
+
+  .steps { display: grid; gap: 10px; }
+  .step {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    box-shadow: var(--shadow-sm);
+    display: grid; grid-template-columns: 32px 1fr auto;
+    align-items: start; gap: 12px;
+  }
+  .step .num {
+    width: 28px; height: 28px;
+    background: var(--accent-bg); color: var(--accent);
+    border-radius: 999px; display: grid; place-items: center;
+    font-weight: 600;
+  }
+  .step strong { font-weight: 600; }
+  .step p { color: var(--muted); margin-top: 3px; font-size: 13px; }
+  .step .meta {
+    color: var(--muted); font-size: 12px;
+    background: var(--surface-2); padding: 3px 8px; border-radius: 999px;
+  }
+
+  /* ---------- Dark Conyso footer ---------- */
+  footer {
+    background: var(--chrome-bg);
+    color: var(--chrome-muted);
+    border-top: 1px solid var(--chrome-line);
+    padding: 24px 32px;
+    font-size: 12px;
+    display: flex; justify-content: space-between;
+  }
+  footer a { color: var(--chrome-ink-2); }
+  footer a + a { margin-left: 20px; }
+  footer a:hover { color: var(--chrome-accent); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <span class="mark">CONYSO &nbsp;BENCH</span>
+    <span class="sub">Statistical Workbench</span>
+  </div>
+  <nav class="top">
+    <a href="https://conyso.com">Conyso</a>
+    <a href="#">Bill</a>
+    <a href="#">Vault</a>
+    <a href="#">Machine</a>
+  </nav>
+</header>
+
+<div class="shell">
+  <aside>
+    <h3>Workspace</h3>
+    <ul>
+      <li>Datasets (4)</li>
+      <li>Analyses (17)</li>
+      <li>Recipes (3)</li>
+    </ul>
+    <h3>Analysis</h3>
+    <ul>
+      <li>Hypothesis tests</li>
+      <li>Control charts</li>
+      <li class="active">Capability</li>
+      <li>Gauge R&amp;R</li>
+      <li>Regression</li>
+      <li>DOE</li>
+      <li>Reliability</li>
+      <li>Time series</li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="breadcrumb"><a href="#">Datasets</a> / <a href="#">pump_cycle_test.csv</a> / Capability</div>
+    <h1>Process Capability — cycle_time_minutes</h1>
+    <p class="deck">Specification: 4.5 ≤ x ≤ 6.5 minutes. Target 5.5. Sample n = 248 over the last 30 production days.</p>
+
+    <div class="card">
+      <h2>Distribution vs. Specification <span class="badge">Cpk &lt; 1.33</span></h2>
+      <div class="chart">
+        <svg viewBox="0 0 800 200" preserveAspectRatio="none">
+          <line x1="40" y1="170" x2="760" y2="170" stroke="#d1d5db" />
+          <line x1="180" y1="14" x2="180" y2="170" stroke="#b42318" stroke-dasharray="4 4" />
+          <line x1="640" y1="14" x2="640" y2="170" stroke="#b42318" stroke-dasharray="4 4" />
+          <line x1="410" y1="14" x2="410" y2="170" stroke="#c5a572" stroke-dasharray="2 4" />
+          <text x="180" y="12" fill="#b42318" font-size="10" text-anchor="middle">LSL 4.5</text>
+          <text x="640" y="12" fill="#b42318" font-size="10" text-anchor="middle">USL 6.5</text>
+          <text x="410" y="12" fill="#a07a30" font-size="10" text-anchor="middle">Target 5.5</text>
+          <g fill="#1d4ed8" fill-opacity="0.5">
+            <rect x="60"  y="150" width="36" height="20" />
+            <rect x="100" y="130" width="36" height="40" />
+            <rect x="140" y="100" width="36" height="70" />
+            <rect x="180" y="64"  width="36" height="106" />
+            <rect x="220" y="48"  width="36" height="122" />
+            <rect x="260" y="34"  width="36" height="136" />
+            <rect x="300" y="28"  width="36" height="142" />
+            <rect x="340" y="26"  width="36" height="144" />
+            <rect x="380" y="32"  width="36" height="138" />
+            <rect x="420" y="44"  width="36" height="126" />
+            <rect x="460" y="62"  width="36" height="108" />
+            <rect x="500" y="88"  width="36" height="82" />
+            <rect x="540" y="118" width="36" height="52" />
+            <rect x="580" y="138" width="36" height="32" />
+            <rect x="620" y="154" width="36" height="16" />
+            <rect x="660" y="162" width="36" height="8" />
+          </g>
+        </svg>
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric"><div class="label">Mean</div><div class="value">5.41</div></div>
+      <div class="metric warn"><div class="label">Cp</div><div class="value">1.06</div></div>
+      <div class="metric bad"><div class="label">Cpk</div><div class="value">0.87</div></div>
+      <div class="metric warn"><div class="label">Pp</div><div class="value">1.02</div></div>
+      <div class="metric bad"><div class="label">Ppk</div><div class="value">0.81</div></div>
+      <div class="metric warn"><div class="label">% out</div><div class="value">2.1%</div></div>
+    </div>
+
+    <div class="interp">
+      <div class="ttl">What this means</div>
+      <p>The process is <strong>marginally capable in spread</strong> (Cp ≈ 1.0) but <strong>off-centre toward the lower spec</strong> (Cpk &lt; Cp by ~18%). About one in fifty parts will fall below 4.5 min under current behaviour.</p>
+      <p>Short-term capability (Cp/Cpk) and long-term capability (Pp/Ppk) agree within rounding — variation isn't drifting, but the set-point is wrong.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <div><strong>Centre the process before chasing spread.</strong><p>Shifting the mean from 5.41 to 5.50 should lift Cpk from 0.87 to ≈ 1.05 with no other change. Adjust the set-point; re-sample 50 cycles.</p></div>
+        <div class="meta">~1 day</div>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <div><strong>Run Gauge R&amp;R before any variance work.</strong><p>Spread that low often means measurement noise is bigger than process noise. A 30-min GR&amp;R rules this out cheaply.</p></div>
+        <div class="meta">~30 min</div>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <div><strong>Re-run Capability on the centred sample.</strong><p>Targets to clear: Cpk ≥ 1.33 (standard) or 1.67 (critical-to-quality). Saved as a recipe.</p></div>
+        <div class="meta">~5 min</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>
+  <div>Conyso Bench · the deterministic engine beneath Bill · AGPL-3.0</div>
+  <div>
+    <a href="https://conyso.com">conyso.com</a>
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+  </div>
+</footer>
+</body>
+</html>

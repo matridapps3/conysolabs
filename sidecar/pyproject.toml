@@ -1,0 +1,27 @@
+[project]
+name = "conyso-bench-sidecar"
+version = "1.0.0"
+description = "Conyso Bench — the free Lean Six Sigma statistical workbench. No LLM, no S3, no DB."
+license = "AGPL-3.0-or-later"
+requires-python = ">=3.11"
+dependencies = [
+  "fastapi>=0.115",
+  "uvicorn[standard]>=0.32",
+  "pydantic>=2.9",
+  "pandas>=2.2",
+  "numpy>=2.0",
+  "scipy>=1.13",
+  "statsmodels>=0.14",
+  "matplotlib>=3.9",
+  "openpyxl>=3.1",
+  "pdfplumber>=0.11",
+  "python-multipart>=0.0.9",
+  "pyarrow>=18.0",
+  "scikit-learn>=1.5",
+]
+
+[project.optional-dependencies]
+test = [
+  "pytest>=8.0",
+  "httpx>=0.27",      # FastAPI TestClient — exercises the real HTTP path
+]

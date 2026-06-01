@@ -1,0 +1,13 @@
+{
+  "name": "conyso-bench-monitor",
+  "version": "1.0.0",
+  "description": "Self-contained continuous-SPC watchdog — polls a CSV source, applies I-MR control limits, alerts on out-of-control signals. No DB, no AI, no Bench dependency.",
+  "license": "AGPL-3.0-or-later",
+  "type": "module",
+  "bin": { "bench-monitor": "index.js" },
+  "scripts": {
+    "start": "node index.js",
+    "test": "node --test"
+  },
+  "engines": { "node": ">=18" }
+}

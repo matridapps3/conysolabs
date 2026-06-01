@@ -1,0 +1,34 @@
+# Conyso Bench — one-command deploy.
+#
+#   docker compose up
+#   → open http://localhost:3000
+#
+# Data persists in ./server/data (SQLite + uploaded files + chart PNGs).
+
+services:
+  sidecar:
+    build: ./sidecar
+    environment:
+      - DATA_DIR=/data
+    volumes:
+      - ./server/data:/data
+    expose:
+      - "8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/healthz').read()"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  server:
+    build: ./server
+    environment:
+      - PORT=3000
+      - SIDECAR_URL=http://sidecar:8000
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./server/data:/app/data
+    depends_on:
+      sidecar:
+        condition: service_healthy

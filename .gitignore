@@ -1,0 +1,27 @@
+# Node
+node_modules/
+npm-debug.log
+.npm
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+
+# Runtime data (created by the server)
+server/data/
+sidecar/data/
+data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.idea/
+.vscode/
+*.swp

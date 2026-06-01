@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conyso Lens · See your data</title>
+  <meta name="description" content="Conyso Lens — visual exploration of any dataset. 14+ chart types, each with a plain-English interpretation. Companion product to Conyso Bench." />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="stylesheet" href="/lens.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <!-- No-FOUC theme bootstrap, identical to Bench. -->
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('bench-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div id="app"></div>
+  <!-- Shared chart helpers from Bench so Lens reuses the interactive SVG infrastructure. -->
+  <script src="/js/view/stats-ux.js"></script>
+  <script src="/lens.js"></script>
+</body>
+</html>

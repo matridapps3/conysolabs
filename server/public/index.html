@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Conyso Bench — Free Lean Six Sigma Statistical Workbench</title>
+  <meta name="description" content="The free, self-hosted statistical workbench for Lean Six Sigma. 27 hypothesis tests, 9 control charts, capability, DOE, regression, reliability — no LLM, no cloud, no login." />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='3' fill='%230a0a0c'/%3E%3Ctext x='16' y='22' font-family='system-ui,-apple-system,sans-serif' font-size='18' font-weight='200' fill='%23c5a572' text-anchor='middle' letter-spacing='1'%3EC%3C/text%3E%3C/svg%3E" />
+  <script>
+    // No-FOUC theme bootstrap. Runs before styles paint so the page never
+    // flashes the wrong palette. Default = dark; honors stored choice;
+    // falls back to system 'prefers-color-scheme: light'.
+    (function () {
+      try {
+        var stored = localStorage.getItem('theme');
+        var prefersLight = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches;
+        var theme = stored || (prefersLight ? 'light' : 'dark');
+        document.documentElement.setAttribute('data-theme', theme);
+      } catch (_) {
+        document.documentElement.setAttribute('data-theme', 'dark');
+      }
+    })();
+  </script>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="app"></div>
+  <!-- MVC split of the former app.js. All non-module scripts so top-level
+       constants are shared across files by load order. Load order preserves the
+       original sequence exactly (concatenation is byte-identical to old app.js),
+       so behavior is unchanged; stats-ux.js loads last, as it did before. -->
+  <script src="/js/core.js"></script>
+  <script src="/js/controller/tour.js"></script>
+  <script src="/js/controller/routing.js"></script>
+  <script src="/js/view/shell.js"></script>
+  <script src="/js/view/views-home.js"></script>
+  <script src="/js/view/views-projects.js"></script>
+  <script src="/js/view/views-explore.js"></script>
+  <script src="/js/view/views-learn.js"></script>
+  <script src="/js/model/kinds.js"></script>
+  <script src="/js/view/views-analyze.js"></script>
+  <script src="/js/view/views-tools.js"></script>
+  <script src="/js/view/stats-ux.js"></script>
+</body>
+</html>

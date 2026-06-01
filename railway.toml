@@ -1,0 +1,24 @@
+# Conyso Bench — Railway service config.
+# Pairs with the root Dockerfile (combined Node + Python container).
+#
+# ⚠️ PERSISTENCE — READ BEFORE DEPLOYING ⚠️
+# All user data (SQLite engine.db, uploaded rows, chart artifacts) is written
+# under DATA_DIR, which the Dockerfile sets to /data. Railway container disks
+# are EPHEMERAL: without a volume mounted at /data, every redeploy or restart
+# permanently destroys all datasets, analyses, and projects.
+# Railway volumes are created in the dashboard (Service → Settings → Volumes);
+# attach one with mount path EXACTLY /data. The server logs a loud warning at
+# startup if DATA_DIR is not backed by a Railway volume.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# `/` returns the SPA's index.html (200) once the server is up. Sidecar readiness
+# is gated inside start.sh, so a healthy `/` implies the whole stack is live.
+healthcheckPath = "/"
+healthcheckTimeout = 60
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
+numReplicas = 1
