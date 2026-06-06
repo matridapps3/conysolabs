@@ -178,7 +178,24 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
                             "power": power, "power_label": _power_label(power)}}
 
     if test in ("anova", "one_way_anova"):
-        arrays = [g.dropna().astype(float) for _, g in df.groupby(group_col)[column]]
+        if not group_col:
+            raise ValueError("one-way ANOVA needs a grouping column — the factor whose "
+                             "levels you want to compare (e.g. machine, line, shift).")
+        if group_col not in df.columns:
+            raise ValueError(f"grouping column '{group_col}' not found in the data.")
+        if not column or column not in df.columns:
+            raise ValueError("one-way ANOVA needs a numeric response column to compare across groups.")
+        try:
+            arrays = [g.dropna().astype(float) for _, g in df.groupby(group_col)[column]]
+        except (ValueError, TypeError):
+            raise ValueError(f"response column '{column}' must be numeric for one-way ANOVA.")
+        arrays = [a for a in arrays if a.size > 0]
+        if len(arrays) < 2:
+            raise ValueError("one-way ANOVA needs at least two groups with data to compare. "
+                             "Check that the grouping column has two or more levels.")
+        if sum(a.size for a in arrays) <= len(arrays):
+            raise ValueError("one-way ANOVA needs more observations than groups — at least "
+                             "one group must have two or more values.")
         r = sps.f_oneway(*arrays)
         # Effect sizes: eta², omega² (less biased for small samples)
         all_vals = np.concatenate(arrays)

@@ -234,6 +234,40 @@ nav.sidebar.two-rail { flex-direction: row; padding: 0; gap: 0; overflow: hidden
   color: var(--muted); padding: 0 4px 10px;
 }
 .nav-panel ul { list-style: none; padding: 0; margin: 0; }
+
+/* ── Themed sidebar scrollbars ──
+   Scoped to the sidebar scroll containers so the browser-default grey bar
+   doesn't clash with the warm palette. Uses theme vars, so it adapts to
+   light/dark automatically. Functionality (native scrolling) is unchanged. */
+.nav-panel, .nav-rail, nav.sidebar {
+  scrollbar-width: thin;                       /* Firefox */
+  scrollbar-color: var(--faint) transparent;   /* thumb | track */
+}
+.nav-panel::-webkit-scrollbar,
+.nav-rail::-webkit-scrollbar,
+nav.sidebar::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.nav-panel::-webkit-scrollbar-track,
+.nav-rail::-webkit-scrollbar-track,
+nav.sidebar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.nav-panel::-webkit-scrollbar-thumb,
+.nav-rail::-webkit-scrollbar-thumb,
+nav.sidebar::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border-radius: 999px;
+  border: 2px solid transparent;   /* inset padding → slimmer thumb */
+  background-clip: padding-box;
+}
+.nav-panel::-webkit-scrollbar-thumb:hover,
+.nav-rail::-webkit-scrollbar-thumb:hover,
+nav.sidebar::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+  background-clip: padding-box;
+}
 @media (max-width: 640px) {
   main { grid-template-columns: 1fr; }
   nav.sidebar { display: none; }

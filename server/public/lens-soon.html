@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Conyso Lens · Coming soon</title>
+  <meta name="description" content="Conyso Lens — visual data exploration. Coming soon, alongside Conyso Bench." />
+  <link rel="icon" href="/favicon.svg" />
+  <link rel="stylesheet" href="/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <script>
+    (function () {
+      try {
+        var t = localStorage.getItem('bench-theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', t);
+      } catch (e) {}
+    })();
+  </script>
+  <style>
+    .soon-wrap {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 2rem;
+      gap: 1.25rem;
+    }
+    .soon-kicker {
+      font-family: var(--font-body, 'Inter', sans-serif);
+      text-transform: uppercase;
+      letter-spacing: 0.22em;
+      font-size: 0.72rem;
+      color: var(--accent);
+    }
+    .soon-title {
+      font-family: var(--font-display, 'Playfair Display', serif);
+      font-weight: 600;
+      font-size: clamp(2.4rem, 6vw, 4rem);
+      color: var(--ink);
+      margin: 0;
+      letter-spacing: 0.02em;
+    }
+    .soon-badge {
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 0.95rem;
+      color: var(--ink-2);
+      border: 1px solid var(--faint);
+      border-radius: 999px;
+      padding: 0.45rem 1.25rem;
+    }
+    .soon-sub {
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 1rem;
+      color: var(--ink-2);
+      max-width: 32rem;
+      line-height: 1.65;
+      margin: 0;
+    }
+    .soon-back {
+      font-family: var(--font-body, 'Inter', sans-serif);
+      font-size: 0.95rem;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease;
+      margin-top: 0.5rem;
+    }
+    .soon-back:hover { border-bottom-color: var(--accent); }
+  </style>
+</head>
+<body>
+  <main class="soon-wrap">
+    <div class="soon-kicker">Conyso Labs</div>
+    <h1 class="soon-title">Conyso Lens</h1>
+    <div class="soon-badge">Coming soon</div>
+    <p class="soon-sub">Visual data exploration is on its way — chart-first analysis with plain-English interpretation, built to sit alongside Conyso Bench.</p>
+    <a class="soon-back" href="/">&larr; Back to Conyso Bench</a>
+  </main>
+</body>
+</html>

@@ -103,15 +103,26 @@ app.use('/api', (_req, res) => {
 // Conyso Lens — sibling SPA served at /lens (today) and at lens.conyso.com
 // (when DNS is pointed at the Railway service; the Host-header branch below
 // rewrites the root path to /lens so users land on Lens directly).
+//
+// TEMPORARILY GATED: Lens access is closed for now and replaced with a
+// "coming soon" placeholder. The real Lens (lens.html + lens.js + lens.css)
+// is left untouched. To re-enable, set LENS_PAGE back to 'lens.html' and
+// remove the /lens.html guard below — nothing else changes.
+const LENS_PAGE = 'lens-soon.html';   // was 'lens.html'
 app.use((req, res, next) => {
   const host = (req.headers.host || '').toLowerCase();
   if (host.startsWith('lens.') && req.path === '/') {
-    return res.sendFile(path.join(__dirname, 'public', 'lens.html'));
+    return res.sendFile(path.join(__dirname, 'public', LENS_PAGE));
   }
   next();
 });
 app.get('/lens', (_req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'lens.html'));
+  res.sendFile(path.join(__dirname, 'public', LENS_PAGE));
+});
+// Gate direct access to the raw Lens HTML too, so the static middleware
+// below cannot serve the real Lens page while access is closed.
+app.get('/lens.html', (_req, res) => {
+  res.sendFile(path.join(__dirname, 'public', LENS_PAGE));
 });
 
 // Static SPA
