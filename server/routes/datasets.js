@@ -283,6 +283,9 @@ async function fetchSourceText(url) {
   const timer = setTimeout(() => ac.abort(), 20_000);
   try {
     const r = await fetch(safe, { signal: ac.signal, redirect: 'follow', headers: { 'user-agent': 'ConysoBench/1.0' } });
+    // A public URL can 30x-redirect to a private/loopback host (SSRF). Re-check
+    // the final URL after redirects so we don't return data from a blocked host.
+    try { assertSafeUrl(r.url); } catch { const e = new Error('source redirected to a disallowed host'); e.status = 400; throw e; }
     if (!r.ok) { const e = new Error(`source returned ${r.status}`); e.status = 502; throw e; }
     // Cap at ~25 MB to avoid memory blowups.
     const buf = await r.arrayBuffer();

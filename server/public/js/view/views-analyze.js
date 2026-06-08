@@ -814,8 +814,8 @@ function PowerCurveCalc() {
       });
       const s = r.summary || r;
       result.innerHTML = `Required <strong>n = ${s.n_required}</strong>` +
-        `${s.kind.includes('two') || s.kind === 'anova' ? ' per group' : ''} ` +
-        `for ${(s.power_target * 100).toFixed(0)}% power at ${s.effect_label}=${s.effect_size.toFixed(3)}, α=${s.alpha}.`;
+        `${s.kind?.includes('two') || s.kind === 'anova' ? ' per group' : ''} ` +
+        `for ${(s.power_target * 100).toFixed(0)}% power at ${s.effect_label}=${s.effect_size?.toFixed?.(3)}, α=${s.alpha}.`;
       chart.innerHTML = '';
       if (r.chart_storage_key) {
         chart.append(h('img', { src: `/artifact/${r.chart_storage_key}`,
@@ -917,12 +917,12 @@ function MonteCarloCalc() {
     result.innerHTML = '';
     const cap = s.capability;
     result.append(h('p', { className: 'muted', style: 'font-size:13px' },
-      `Predicted output: mean ${s.mean.toFixed(3)}, σ ${s.sd.toFixed(3)}` +
+      `Predicted output: mean ${s.mean?.toFixed?.(3)}, σ ${s.sd?.toFixed?.(3)}` +
       (cap && cap.cpk != null ? ` · Cpk ${cap.cpk.toFixed(2)} · ${Math.round(cap.predicted_dpmo).toLocaleString()} DPMO predicted` : '')));
     const tbl = h('table', { className: 'table' });
     tbl.append(h('thead', {}, h('tr', {}, h('th', {}, 'Input'), h('th', { style: 'text-align:right' }, '% of output variance'))));
     const tb = h('tbody');
-    for (const c of s.sensitivity) tb.append(h('tr', {}, h('td', {}, c.name), h('td', { className: 'mono', style: 'text-align:right' }, c.contribution_pct.toFixed(1) + '%')));
+    for (const c of (s.sensitivity || [])) tb.append(h('tr', {}, h('td', {}, c.name), h('td', { className: 'mono', style: 'text-align:right' }, c.contribution_pct?.toFixed?.(1) + '%')));
     tbl.append(tb); result.append(tbl);
     if (r.chart_storage_key) result.append(h('img', { src: `/artifact/${r.chart_storage_key}`, alt: 'Predicted output distribution', style: 'max-width:100%;border-radius:6px;margin-top:10px' }));
   }) }, 'Simulate');
@@ -960,9 +960,9 @@ function ToleranceStackCalc() {
     const r = await api.post('/api/tools/tolerance-stack', { inputs: comps });
     const s = r.summary || r;
     result.innerHTML = `Assembly nominal <strong>${s.assembly_nominal}</strong><br>` +
-      `Worst-case: ±${s.worst_case_tol.toFixed(4)} → [${s.worst_case_interval[0].toFixed(3)}, ${s.worst_case_interval[1].toFixed(3)}]<br>` +
-      `RSS (statistical): ±${s.rss_tol.toFixed(4)} → [${s.rss_interval[0].toFixed(3)}, ${s.rss_interval[1].toFixed(3)}]<br>` +
-      `<span class="muted">Dominant component: <strong>${s.components[0].name}</strong> (${s.components[0].rss_share_pct.toFixed(0)}% of the RSS stack)</span>`;
+      `Worst-case: ±${s.worst_case_tol?.toFixed?.(4)} → [${s.worst_case_interval?.[0]?.toFixed?.(3)}, ${s.worst_case_interval?.[1]?.toFixed?.(3)}]<br>` +
+      `RSS (statistical): ±${s.rss_tol?.toFixed?.(4)} → [${s.rss_interval?.[0]?.toFixed?.(3)}, ${s.rss_interval?.[1]?.toFixed?.(3)}]<br>` +
+      `<span class="muted">Dominant component: <strong>${s.components?.[0]?.name}</strong> (${s.components?.[0]?.rss_share_pct?.toFixed?.(0)}% of the RSS stack)</span>`;
   }) }, 'Compute stack');
   card.append(h('div', { className: 'section-label' }, 'Components'), rowsBox,
     h('button', { className: 'ghost', style: 'font-size:12px', onclick: () => { comps.push({ name: 'C', nominal: 0, tol: 0.1, coeff: 1 }); renderRows(); } }, '+ component'),

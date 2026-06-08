@@ -84,7 +84,7 @@ server/         Node Express — UI + SQLite metadata + sidecar proxy
 sidecar/        Python FastAPI — all the math
   app.py       Endpoint dispatcher
   stats/       25 statistical modules
-  parsers/     CSV / Excel / PDF / screenshot parsers
+  parsers/     CSV / Excel / PDF parsers
   wrangle/     Outlier detection
   tests/       Pytest suite (108 tests)
 ```
