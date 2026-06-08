@@ -73,7 +73,9 @@ const api = {
                 : offline                  ? 'You appear to be offline.'
                                            : `Cannot reach server (${e.message || 'network error'}).`;
       toast({ kind: 'error', title: 'Network error', msg });
-      throw Object.assign(new Error(msg), { status: 0, code: 'network_error' });
+      // `toasted` tells the global error handler this was already surfaced to
+      // the user, so it doesn't fire a duplicate generic "Something broke".
+      throw Object.assign(new Error(msg), { status: 0, code: 'network_error', toasted: true });
     }
     clearTimeout(timer);
     let json; try { json = await r.json(); } catch { json = {}; }
@@ -84,7 +86,8 @@ const api = {
       // reason ("column 'NOPE' not in dataset").
       const msg = String(raw).replace(/^sidecar\s+\/\S+\s+\d{3}:\s*/, '');
       toast({ kind: 'error', title: 'Request failed', msg });
-      throw Object.assign(new Error(msg), { status: r.status, body: json });
+      // `toasted`: already shown to the user — global handler skips the dup.
+      throw Object.assign(new Error(msg), { status: r.status, body: json, toasted: true });
     }
     return json;
   },
@@ -219,6 +222,9 @@ function toast({ kind = 'info', title, msg, duration = 4000 } = {}) {
 const _errToastSeen = new Map();
 function _reportError(label, err) {
   try {
+    // Errors already surfaced by api._do carry a `toasted` flag — don't show a
+    // duplicate generic toast on top of the specific one the user already saw.
+    if (err && (err.toasted || (err.reason && err.reason.toasted))) return;
     const msg = (err && (err.message || err.reason || String(err))) || 'unknown_error';
     const key = `${label}:${msg}`;
     const now = Date.now();
