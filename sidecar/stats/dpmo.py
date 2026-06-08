@@ -40,6 +40,17 @@ def compute(
         z = norm.ppf(1.0 - dpo)
         sigma_level = z + (1.5 if apply_shift else 0.0)
 
+    # Process sigma both with and without the classic 1.5σ shift, so the
+    # calculator UI can show both. (sigma_level above is kept unchanged for
+    # any existing consumer.)
+    if dpmo >= 1_000_000:
+        sigma_level_no_shift = 0.0
+    elif dpmo <= 0:
+        sigma_level_no_shift = 6.0
+    else:
+        sigma_level_no_shift = float(norm.ppf(1.0 - dpo))
+    sigma_level_shifted = sigma_level_no_shift + 1.5
+
     band = (
         "world-class"   if sigma_level >= 6 else
         "excellent"     if sigma_level >= 5 else
@@ -60,6 +71,8 @@ def compute(
             "yield_pct": yield_pct,
             "rolled_throughput_yield_pct": rolled_throughput_yield,
             "sigma_level": sigma_level,
+            "sigma_level_no_shift": sigma_level_no_shift,
+            "sigma_level_shifted": sigma_level_shifted,
             "applied_1_5_shift": apply_shift,
             "band": band,
         }
