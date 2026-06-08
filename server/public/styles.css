@@ -64,7 +64,7 @@ html, body { margin: 0; padding: 0; height: 100%; }
   --bg:        #ece8de;
   --surface:   #ffffff;
   --surface-2: #dfd9cc;
-  --chrome-bg: #e6e1d5;   /* header + sidebar — subtly darker than bg (light) */
+  --chrome-bg: #e9e4da;   /* header + sidebar — subtly darker than bg (light) */
   --line:      rgba(20,17,11,0.14);
   --line-2:    rgba(20,17,11,0.22);
 
