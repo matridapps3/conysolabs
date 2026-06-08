@@ -27,12 +27,6 @@ const VIEW_REGISTRY = {
 
 function renderWorkspace() {
   const sec = h('section', { className: 'workspace' });
-  // Subtle fade/slide-in, but only when the main view (tab) actually changes,
-  // so it doesn't replay on every minor re-render within the same view.
-  if (renderWorkspace._lastView !== state.view) {
-    sec.classList.add('view-enter');
-    renderWorkspace._lastView = state.view;
-  }
   if (state._demoMode) sec.append(renderDemoBanner());
   const viewFn = VIEW_REGISTRY[state.view];
   if (!viewFn) {
