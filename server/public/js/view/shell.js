@@ -19,7 +19,7 @@ function renderHeader() {
     menuBtn,
     h('div', { className: 'brand' },
       h('span', { className: 'brand-mark' }, icon('brand', { stroke: 1.4 })),
-      h('span', { className: 'mark' }, 'CONYSO  BENCH'),
+      h('span', { className: 'mark' }, 'CONYSO BENCH'),
       h('small', {}, 'Statistical Workbench'),
     ),
     h('span', { className: 'spacer' }),
