@@ -78,11 +78,11 @@ router.post('/', (req, res, next) => {
     const db = req.app.locals.db;
     let project = null;
     if (body.project_id) {
-      const p = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(body.project_id);
+      const p = db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(body.project_id, w);
       if (p) project = rowToJsonObj(p, ['phase_data']);
     }
     const seedAnalyses = (body.analysis_ids || []).map(id =>
-      rowToJsonObj(db.prepare(`SELECT * FROM analyses WHERE id = ?`).get(id), ['params_json', 'result_json']),
+      rowToJsonObj(db.prepare(`SELECT * FROM analyses WHERE id = ? AND workspace_id = ?`).get(id, w), ['params_json', 'result_json']),
     ).filter(Boolean);
 
     const skeleton = tpl.defaults ? tpl.defaults({ project, analyses: seedAnalyses }) : {};
@@ -202,15 +202,18 @@ router.post('/:id/duplicate', (req, res, next) => {
 function loadReportCtx(db, reportId, req) {
   const row = db.prepare(`SELECT * FROM reports WHERE id = ?`).get(reportId);
   if (!row) return null;
+  // Linked project/analyses are scoped to the report's own workspace, so a
+  // foreign id linked into a report can't render another workspace's data.
+  const wsId = row.workspace_id;
   const report = rowToJsonObj(row, ['data_json', 'analyses_json']);
   let project = null;
   if (report.project_id) {
-    const p = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(report.project_id);
+    const p = db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(report.project_id, wsId);
     if (p) project = rowToJsonObj(p, ['phase_data']);
   }
   const ids = report.analyses_json || [];
   const analyses = ids.map(id =>
-    rowToJsonObj(db.prepare(`SELECT * FROM analyses WHERE id = ?`).get(id), ['params_json', 'result_json']),
+    rowToJsonObj(db.prepare(`SELECT * FROM analyses WHERE id = ? AND workspace_id = ?`).get(id, wsId), ['params_json', 'result_json']),
   ).filter(Boolean);
   const publicBase = `${req.protocol}://${req.get('host')}`;
   return { report, project, analyses, publicBase };

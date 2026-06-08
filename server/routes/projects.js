@@ -205,8 +205,8 @@ router.post('/:id/recommend', async (req, res, next) => {
       const placeholders = ids.map(() => '?').join(',');
       const rows = db.prepare(
         `SELECT id, kind, params_json, result_json, dataset_id, created_at
-           FROM analyses WHERE id IN (${placeholders}) ORDER BY created_at DESC`,
-      ).all(...ids);
+           FROM analyses WHERE id IN (${placeholders}) AND workspace_id = ? ORDER BY created_at DESC`,
+      ).all(...ids, w);
       history = rows.map(r => {
         let result = {};
         try { result = JSON.parse(r.result_json || '{}'); } catch {}
@@ -222,7 +222,7 @@ router.post('/:id/recommend', async (req, res, next) => {
     // Best-effort dataset summary (schema + row count) for data-shape rules.
     let dataset = null;
     if (datasetId) {
-      const ds = db.prepare(`SELECT schema_json, row_count FROM datasets WHERE id = ?`).get(datasetId);
+      const ds = db.prepare(`SELECT schema_json, row_count FROM datasets WHERE id = ? AND workspace_id = ?`).get(datasetId, w);
       if (ds) {
         dataset = {
           n_rows: ds.row_count,

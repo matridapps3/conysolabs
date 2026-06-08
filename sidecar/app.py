@@ -624,7 +624,16 @@ def regression(req: RegressionReq):
         result = regression_stat.compute(df, response=req.response,
                                          predictors=req.predictors or [])
     elif method == "glm":
-        formula = req.formula or f"{req.response} ~ " + " + ".join(req.predictors or [])
+        formula = req.formula
+        if not formula:
+            import re as _re
+            _bad = [c for c in [req.response, *(req.predictors or [])]
+                    if c and not _re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', str(c))]
+            if _bad:
+                raise HTTPException(status_code=400,
+                    detail=f"Column name(s) {_bad} have spaces or special characters that GLM "
+                           f"can't use in a formula. Rename them (e.g. 'Yield_pct') and re-run.")
+            formula = f"{req.response} ~ " + " + ".join(req.predictors or [])
         result = regression_stat.glm(df, formula=formula, family=req.family or "gaussian")
     elif method == "logistic":
         result = regression_stat.logistic(df, response=req.response,

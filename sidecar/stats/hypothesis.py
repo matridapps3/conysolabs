@@ -250,6 +250,13 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
         between = kwargs.get("factor_a")
         if not subject_col or not within:
             raise ValueError("rm_anova requires subject_col and within")
+        import re as _re
+        _bad = [c for c in (column, subject_col, within, between)
+                if c and not _re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', str(c))]
+        if _bad:
+            raise ValueError(f"Column name(s) {_bad} have spaces or special characters that "
+                             f"repeated-measures ANOVA can't use. Rename them "
+                             f"(e.g. 'Yield_pct') and re-run.")
         sub = df[[column, subject_col, within] + ([between] if between else [])].dropna()
         # statsmodels requires every (subject, within-cell) be present exactly
         # once. Aggregate just in case the caller has replicates.
@@ -456,6 +463,13 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
         # the correct response is to fit the ADDITIVE model and use the
         # interaction as the error term. Detect that case and drop the
         # interaction rather than crashing with a cryptic NaN error.
+        import re as _re
+        _bad = [c for c in (column, a_col, b_col)
+                if c and not _re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', str(c))]
+        if _bad:
+            raise ValueError(f"Column name(s) {_bad} have spaces or special characters that "
+                             f"two-way ANOVA can't use in a formula. Rename them "
+                             f"(e.g. 'Yield_pct') and re-run.")
         cell_counts = sub.groupby([a_col, b_col]).size()
         has_replication = bool((cell_counts > 1).any())
         ss_type_int = {"I": 1, "II": 2, "III": 3}[ss_type]

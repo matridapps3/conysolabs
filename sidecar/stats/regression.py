@@ -507,6 +507,13 @@ def beta_regression(df: pd.DataFrame, response: str, predictors: list[str]) -> d
     if not ((y > 0) & (y < 1)).all():
         raise ValueError("beta_regression: all y must be strictly in (0, 1). "
                          "If your scale is 0–100, divide by 100; for 0/1 outcomes use logistic.")
+    import re as _re
+    _bad = [c for c in [response, *(predictors or [])]
+            if c and not _re.match(r'^[A-Za-z_][A-Za-z0-9_]*$', str(c))]
+    if _bad:
+        raise ValueError(f"Column name(s) {_bad} have spaces or special characters that "
+                         f"beta regression can't use in a formula. Rename them "
+                         f"(e.g. 'Yield_pct') and re-run.")
     try:
         from statsmodels.othermod.betareg import BetaModel
         rhs = " + ".join(predictors) if predictors else "1"

@@ -198,6 +198,8 @@ def _imr_chart(df, column):
 
 
 def _xbar_r_chart(df, column, subgroup_col):
+    if not subgroup_col:
+        raise ValueError("the X-bar/R chart needs a subgroup column (which rows form each subgroup).")
     g = df.groupby(subgroup_col)[column].agg(list)
     subs = [np.asarray(v, dtype=float) for v in g.tolist()]
     sizes = [len(s) for s in subs]
@@ -248,6 +250,8 @@ def _xbar_s_chart(df, column, subgroup_col):
     statistically efficient for larger subgroups; matches Minitab default
     for n ≥ 9.
     """
+    if not subgroup_col:
+        raise ValueError("the X-bar/S chart needs a subgroup column (which rows form each subgroup).")
     g = df.groupby(subgroup_col)[column].agg(list)
     subs = [np.asarray(v, dtype=float) for v in g.tolist()]
     sizes = [len(s) for s in subs]
@@ -398,6 +402,8 @@ def _p_chart(df, defects_col, n_col):
 
 
 def _np_chart(df, defects_col, n_const):
+    if n_const is None:
+        raise ValueError("the np chart needs a constant subgroup size (n).")
     d = df[defects_col].astype(float).to_numpy()
     n = float(n_const)
     pbar = float(d.sum() / (n * len(d)))
