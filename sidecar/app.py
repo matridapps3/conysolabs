@@ -810,6 +810,27 @@ class SampleSizeReq(BaseModel):
 
 @app.post("/stats/sample_size")
 def sample_size(req: SampleSizeReq):
+    # Required inputs per kind. Without these the calculator would compare a
+    # missing value (None) against a number deep inside (e.g. `None <= 0`),
+    # raising a TypeError that surfaces as a raw 500. Validate up front so an
+    # incomplete form returns a clear 400 instead. (chi_square and fpc apply
+    # their own defaults, and proportion_test handles a missing p2 cleanly.)
+    REQUIRED = {
+        "t_test":             ["delta", "sigma"],
+        "proportion_test":    ["p1"],
+        "cpk_validation":     ["cpk_target", "cpk_estimate"],
+        "anova":              ["k_groups", "effect_size_f"],
+        "regression":         ["n_predictors", "effect_size_f2"],
+        "equivalence":        ["delta", "sigma"],
+        "logrank":            ["hazard_ratio"],
+        "cluster_randomized": ["delta", "sigma"],
+        "variance_test":      ["sigma2_ratio"],
+        "correlation":        ["r"],
+    }
+    missing = [f for f in REQUIRED.get(req.kind, []) if getattr(req, f) is None]
+    if missing:
+        raise HTTPException(status_code=400,
+                            detail=f"{req.kind} sample size needs: {', '.join(missing)}.")
     if req.kind == "t_test":
         return sample_size_stat.t_test(delta=req.delta, sigma=req.sigma,
                                        alpha=req.alpha, power=req.power,
