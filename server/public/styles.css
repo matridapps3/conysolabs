@@ -2335,7 +2335,6 @@ details.provenance[open] summary::after { content: " −"; }
    A short fade + small upward slide. Respects reduced-motion. */
 .workspace.view-enter {
   animation: viewEnter 320ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: opacity, transform;
 }
 @keyframes viewEnter {
   from { opacity: 0; transform: translateY(10px); }
