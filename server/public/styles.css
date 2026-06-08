@@ -26,6 +26,7 @@ html, body { margin: 0; padding: 0; height: 100%; }
   --bg:        #0a0a0c;
   --surface:   #111114;
   --surface-2: #16161a;
+  --chrome-bg: #0e0e12;   /* header + sidebar — a hair lighter than bg (dark elevation) */
   --line:      rgba(216,214,207,0.10);
   --line-2:    rgba(216,214,207,0.18);
 
@@ -63,6 +64,7 @@ html, body { margin: 0; padding: 0; height: 100%; }
   --bg:        #ece8de;
   --surface:   #ffffff;
   --surface-2: #dfd9cc;
+  --chrome-bg: #e6e1d5;   /* header + sidebar — subtly darker than bg (light) */
   --line:      rgba(20,17,11,0.14);
   --line-2:    rgba(20,17,11,0.22);
 
@@ -127,7 +129,7 @@ header {
   gap: 16px;
   padding: 22px 40px;
   border-bottom: 1px solid var(--line);
-  background: var(--bg);
+  background: var(--chrome-bg);
   min-height: 76px;
 }
 header .brand {
@@ -292,7 +294,7 @@ nav.sidebar::-webkit-scrollbar-thumb:hover {
 
 /* ============ Sidebar nav ============ */
 nav.sidebar {
-  background: var(--bg);
+  background: var(--chrome-bg);
   border-right: 1px solid var(--line);
   padding: 32px 24px;
   overflow: auto;
