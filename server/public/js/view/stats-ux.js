@@ -544,8 +544,11 @@ const NEXT_ANALYSIS = {
   },
   control_chart: (s) => {
     const out = [];
+    const weRules = s?.we_rules || s?.we_rules_x;
     const totalViolations = (s?.violations?.length || 0)
-      + (s?.we_rules ? Object.values(s.we_rules).reduce((a, v) => a + (v?.length || 0), 0) : 0);
+      + (s?.violations_x?.length || 0)
+      + (s?.violations_r?.length || 0)
+      + (weRules ? Object.values(weRules).reduce((a, v) => a + (v?.length || 0), 0) : 0);
     if (totalViolations > 0) {
       out.push({ label: 'Run Auto-RCA',
         hint: 'Process is not in control. Cluster the defect log to find vital-few causes.',
@@ -568,7 +571,7 @@ const NEXT_ANALYSIS = {
   },
   msa: (s) => {
     const out = [];
-    const totalRR = s?.gauge_rr_pct ?? s?.percent_study_var;
+    const totalRR = s?.total_grr_pct ?? s?.gauge_rr_pct ?? s?.percent_study_var;
     if (totalRR != null && totalRR > 30) {
       out.push({ label: 'Improve the gauge first',
         hint: '%R&R > 30% means the measurement system is unfit. Investigate calibration / operator training before any process work.',
@@ -687,9 +690,10 @@ const ACTION_RULES = {
   },
   control_chart: (s) => {
     const out = [];
-    const r1 = s?.we_rules?.rule_1?.length || 0;
-    const r2 = s?.we_rules?.rule_2?.length || 0;
-    const r3 = s?.we_rules?.rule_3?.length || 0;
+    const weRules = s?.we_rules || s?.we_rules_x || {};
+    const r1 = weRules.rule_1?.length || 0;
+    const r2 = weRules.rule_2?.length || 0;
+    const r3 = weRules.rule_3?.length || 0;
     if (r1 > 0) out.push({ priority: 1, action: 'Investigate out-of-control points (rule-1 violations)',
       effort: 'low', impact: 'high', owner: '[needs input]',
       rationale: `${r1} point(s) beyond ±3σ. Each is a special cause — investigate while the trail is fresh.` });
@@ -712,7 +716,7 @@ const ACTION_RULES = {
   },
   msa: (s) => {
     const out = [];
-    const rr = s?.gauge_rr_pct ?? s?.percent_study_var;
+    const rr = s?.total_grr_pct ?? s?.gauge_rr_pct ?? s?.percent_study_var;
     if (rr != null && rr > 30) {
       out.push({ priority: 1, action: 'Replace or recalibrate the gauge',
         effort: 'medium', impact: 'high', owner: '[needs input]',
@@ -1814,27 +1818,33 @@ const INTERPRETERS = {
     return `${test}: p = ${p?.toFixed?.(3)}. ${verdict}`;
   },
   control_chart: (s) => {
+    // I-MR returns violations/we_rules/x_bar; subgrouped charts (X-bar/R, X-bar/S)
+    // return violations_x/violations_r/we_rules_x/x_double_bar. Read both so the
+    // stability verdict is correct for every chart kind.
+    const weRules = s.we_rules || s.we_rules_x;
     const v = (s.violations?.length || 0)
-      + (s.we_rules ? Object.values(s.we_rules).reduce((a, x) => a + (x?.length || 0), 0) : 0);
+      + (s.violations_x?.length || 0)
+      + (s.violations_r?.length || 0)
+      + (weRules ? Object.values(weRules).reduce((a, x) => a + (x?.length || 0), 0) : 0);
     const stable = v === 0;
     let lines = [];
-    if (s.kind) lines.push(`${s.kind} chart with center ${s.center?.toFixed?.(3) ?? s.x_bar?.toFixed?.(3) ?? s.p_bar?.toFixed?.(3) ?? '—'}, ${s.n_subgroups || s.n} points.`);
+    if (s.kind) lines.push(`${s.kind} chart with center ${s.center?.toFixed?.(3) ?? s.x_bar?.toFixed?.(3) ?? s.p_bar?.toFixed?.(3) ?? s.x_double_bar?.toFixed?.(3) ?? '—'}, ${s.n_subgroups || s.n} points.`);
     if (stable) lines.push('Process is **in statistical control** — no rule violations. Capability indices are interpretable.');
     else {
       lines.push(`**${v} rule violation(s)** detected — process is not yet stable. Investigate special-cause variation before drawing capability conclusions.`);
-      if (s.we_rules) {
+      if (weRules) {
         const breakdown = [];
-        if (s.we_rules.rule_1?.length) breakdown.push(`Rule 1 (beyond 3σ): ${s.we_rules.rule_1.length}`);
-        if (s.we_rules.rule_2?.length) breakdown.push(`Rule 2 (9 same-side): ${s.we_rules.rule_2.length}`);
-        if (s.we_rules.rule_3?.length) breakdown.push(`Rule 3 (6 monotone): ${s.we_rules.rule_3.length}`);
-        if (s.we_rules.rule_4?.length) breakdown.push(`Rule 4 (14 alternating): ${s.we_rules.rule_4.length}`);
+        if (weRules.rule_1?.length) breakdown.push(`Rule 1 (beyond 3σ): ${weRules.rule_1.length}`);
+        if (weRules.rule_2?.length) breakdown.push(`Rule 2 (9 same-side): ${weRules.rule_2.length}`);
+        if (weRules.rule_3?.length) breakdown.push(`Rule 3 (6 monotone): ${weRules.rule_3.length}`);
+        if (weRules.rule_4?.length) breakdown.push(`Rule 4 (14 alternating): ${weRules.rule_4.length}`);
         if (breakdown.length) lines.push(breakdown.join(' · '));
       }
     }
     return lines.join(' ');
   },
   msa: (s) => {
-    const rr = s?.gauge_rr_pct ?? s?.percent_study_var;
+    const rr = s?.total_grr_pct ?? s?.gauge_rr_pct ?? s?.percent_study_var;
     if (rr == null) return 'Gauge R&R results unavailable.';
     const band = rr < 10 ? 'acceptable (<10%)'
                : rr < 30 ? 'marginal (10–30%)'
@@ -1858,7 +1868,7 @@ const INTERPRETERS = {
   },
   pareto: (s) => {
     if (!s?.vital_few) return '';
-    const total = s.total_defects ?? '—';
+    const total = s.total ?? s.total_defects ?? '—';
     const vital = s.vital_few;
     return `Top ${vital.length} categories ("vital few") account for ≥${s.threshold_pct ?? 80}% of ${total} defects: **${vital.join(', ')}**. Concentrate root-cause work here.`;
   },

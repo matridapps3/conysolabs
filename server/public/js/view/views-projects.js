@@ -77,7 +77,8 @@ function renderCopilotPanel(p, ph) {
   const reco = state._reco;
   if (!reco || reco.loading) { panel.append(skeleton({ lines: 2, block: 1 })); return panel; }
   if (reco.error) { panel.append(h('p', { className: 'muted' }, `Couldn't load recommendations: ${reco.error}`)); return panel; }
-  const s = reco.data;
+  const s = reco.data || {};
+  const recs = Array.isArray(s.recommendations) ? s.recommendations : [];
 
   // Tollgate verdict banner.
   const g = s.gate || {};
@@ -89,10 +90,10 @@ function renderCopilotPanel(p, ph) {
       ? h('div', { className: 'muted', style: 'font-size:11.5px;margin-top:4px' }, 'Missing: ' + g.missing_artifacts.join('; ')) : null));
 
   // Ranked recommendation cards.
-  if (!s.recommendations.length) {
+  if (!recs.length) {
     panel.append(h('p', { className: 'muted', style: 'font-size:12.5px' }, 'No outstanding recommendations for this phase — nice work.'));
   }
-  for (const rec of s.recommendations) {
+  for (const rec of recs) {
     const pr = _PRIO[rec.priority] || _PRIO.low;
     const card = h('div', { style: 'border:1px solid var(--line);border-radius:7px;padding:11px 13px;margin-bottom:8px' });
     card.append(h('div', { className: 'row', style: 'align-items:center;gap:8px;margin-bottom:3px' },
