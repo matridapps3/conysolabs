@@ -374,7 +374,13 @@ def logistic(df: pd.DataFrame, response: str, predictors: list[str]) -> dict:
             raise ValueError("logistic: response must be binary")
         y = (y == levels[1]).astype(int)
     X = sm.add_constant(sub[predictors].astype(float).to_numpy(), has_constant="add")
-    m = sm.Logit(y.astype(int).to_numpy(), X).fit(disp=False)
+    try:
+        m = sm.Logit(y.astype(int).to_numpy(), X).fit(disp=False)
+    except Exception as e:
+        raise ValueError(
+            "logistic regression could not fit — this usually means a predictor "
+            "perfectly separates the two outcomes, or there is too little data. "
+            f"({type(e).__name__})")
     # Diagnostics: ROC/AUC, Hosmer-Lemeshow GOF, classification at 0.5,
     # and confusion matrix.
     probs = m.predict(X)
@@ -838,7 +844,12 @@ def nonlinear_regression(df: pd.DataFrame, response: str, predictor: str,
         raise ValueError(f"unknown nonlinear model: {model}")
     fn, default_p0 = funcs[model]
     p0 = p0 or default_p0
-    popt, pcov = optimize.curve_fit(fn, x, y, p0=p0, maxfev=10000)
+    try:
+        popt, pcov = optimize.curve_fit(fn, x, y, p0=p0, maxfev=10000)
+    except (RuntimeError, ValueError, TypeError) as e:
+        raise ValueError(
+            f"nonlinear fit did not converge for model '{model}'. Try a different "
+            f"model, supply initial guesses, or check the data. ({type(e).__name__})")
     yhat = fn(x, *popt)
     ss_res = float(((y - yhat) ** 2).sum())
     ss_tot = float(((y - y.mean()) ** 2).sum())

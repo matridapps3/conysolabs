@@ -114,8 +114,8 @@ router.get('/samples', (_req, res) => {
 
 router.get('/:id', (req, res) => {
   const row = req.app.locals.db.prepare(
-    `SELECT * FROM datasets WHERE id = ?`,
-  ).get(req.params.id);
+    `SELECT * FROM datasets WHERE id = ? AND workspace_id = ?`,
+  ).get(req.params.id, workspaceId(req));
   if (!row) return res.status(404).json({ error: 'not_found' });
   res.json({ dataset: rowToJsonObj(row, ['schema_json']) });
 });
@@ -125,7 +125,7 @@ router.get('/:id', (req, res) => {
 // (mixed numeric/text, dates-as-strings, ID-like, high nulls).
 router.get('/:id/preview', async (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM datasets WHERE id = ?`).get(req.params.id);
+    const row = req.app.locals.db.prepare(`SELECT * FROM datasets WHERE id = ? AND workspace_id = ?`).get(req.params.id, workspaceId(req));
     if (!row) return res.status(404).json({ error: 'not_found' });
     const r = await sidecar.datasetPreview(row.rows_storage_key, Number(req.query.n) || 20);
     res.json(r);
@@ -135,7 +135,7 @@ router.get('/:id/preview', async (req, res, next) => {
 // Full rows (capped) for client-side visualization.
 router.get('/:id/rows', async (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM datasets WHERE id = ?`).get(req.params.id);
+    const row = req.app.locals.db.prepare(`SELECT * FROM datasets WHERE id = ? AND workspace_id = ?`).get(req.params.id, workspaceId(req));
     if (!row) return res.status(404).json({ error: 'not_found' });
     const limit = Math.min(Number(req.query.limit) || 5000, 20000);
     const columns = req.query.columns ? String(req.query.columns).split(',').filter(Boolean) : null;

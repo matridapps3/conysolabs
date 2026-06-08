@@ -112,6 +112,24 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
     if not test:
         raise ValueError("test required")
 
+    # Tests that compare across the levels of a grouping column. Without a
+    # valid grouping column the pandas groupby/pivot in each branch raises a
+    # TypeError (not a ValueError), which would surface to the user as a raw
+    # 500. Guard once here so every grouped test fails with a clear message.
+    # (one_way_anova has its own, more detailed guard further down.)
+    GROUPED_TESTS = {
+        "two_sample_t", "mann_whitney", "kruskal", "mood_median",
+        "levene", "bartlett", "f_test_variances", "two_proportions",
+        "tost_two_sample", "welch_anova", "brown_forsythe_anova",
+        "chi_square", "fisher_exact",
+    }
+    if test in GROUPED_TESTS and not group_col:
+        raise ValueError(f"{test} needs a grouping column — the categorical "
+                         "factor whose groups you want to compare.")
+    if test in ("chi_square", "fisher_exact") and not column:
+        raise ValueError(f"{test} needs two categorical columns: a grouping "
+                         "column and a value column.")
+
     # ---------- Means / locations ----------
 
     if test == "one_sample_t":
@@ -780,7 +798,10 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
         # delta = equivalence margin.
         x = df[column].dropna().astype(float).to_numpy()
         mu0 = float(kwargs.get("mu0") or 0.0)
-        delta = float(kwargs.get("delta"))
+        delta = kwargs.get("delta")
+        if delta is None:
+            raise ValueError("tost requires an equivalence margin (delta).")
+        delta = float(delta)
         if delta <= 0:
             raise ValueError("tost requires delta > 0")
         n = x.size
@@ -801,7 +822,10 @@ def compute(df, test: str | None, column: str | None, group_col: str | None,
         if len(groups) != 2:
             raise ValueError("tost_two_sample requires exactly two groups")
         a, b = groups[0][1].dropna().astype(float), groups[1][1].dropna().astype(float)
-        delta = float(kwargs.get("delta"))
+        delta = kwargs.get("delta")
+        if delta is None:
+            raise ValueError("tost requires an equivalence margin (delta).")
+        delta = float(delta)
         if delta <= 0:
             raise ValueError("tost requires delta > 0")
         diff = float(a.mean() - b.mean())

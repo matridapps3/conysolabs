@@ -65,7 +65,7 @@ def _weibull_mle(times: np.ndarray, censored: np.ndarray) -> tuple[float, float,
     res = optimize.minimize(neg_ll, init, method="Nelder-Mead",
                             options={"xatol": 1e-6, "fatol": 1e-8, "maxiter": 5000})
     if not res.success:
-        raise RuntimeError(f"weibull MLE failed: {res.message}")
+        raise ValueError(f"weibull MLE failed: {res.message}")
     beta, eta = float(res.x[0]), float(res.x[1])
     return beta, eta, float(-res.fun)
 
@@ -181,7 +181,7 @@ def arrhenius_acceleration(df: pd.DataFrame, time_col: str, temp_col_kelvin: str
             fits.append({"temperature_K": float(T), "error": str(e)})
     valid = [f for f in fits if "scale_eta" in f]
     if len(valid) < 2:
-        raise RuntimeError("Arrhenius needs at least 2 stress levels with successful Weibull fits")
+        raise ValueError("Arrhenius needs at least 2 stress levels with successful Weibull fits")
     inv_T = np.array([1.0 / f["temperature_K"] for f in valid])
     ln_eta = np.array([np.log(f["scale_eta"]) for f in valid])
     slope, intercept = np.polyfit(inv_T, ln_eta, 1)

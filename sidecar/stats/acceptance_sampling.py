@@ -49,7 +49,7 @@ def design_plan(aql: float, rql: float, alpha: float = 0.05, beta: float = 0.10,
                     "P_accept_at_RQL": float(p_accept_rql),
                     "lot_size": lot_size,
                 }}
-    raise RuntimeError("could not find a feasible plan with n ≤ 5000")
+    raise ValueError("could not find a feasible plan with n ≤ 5000")
 
 
 def oc_curve(n: int, c: int, p_grid: list[float] | None = None) -> dict:

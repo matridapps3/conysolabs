@@ -26,8 +26,9 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const row = req.app.locals.db.prepare(`SELECT * FROM analyses WHERE id = ?`)
-    .get(req.params.id);
+  const w = workspaceId(req);
+  const row = req.app.locals.db.prepare(`SELECT * FROM analyses WHERE id = ? AND workspace_id = ?`)
+    .get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
   res.json({ analysis: rowToJsonObj(row, ['params_json', 'result_json']) });
 });
@@ -50,10 +51,12 @@ router.get('/:id/dossier', (req, res) => {
 
 router.delete('/:id', (req, res) => {
   const db = req.app.locals.db;
-  const row = db.prepare(`SELECT workspace_id, kind, locked FROM analyses WHERE id = ?`).get(req.params.id);
-  if (row && row.locked) return res.status(409).json({ error: 'analysis_locked', detail: 'This analysis is locked. Unlock it before deleting.' });
-  db.prepare(`DELETE FROM analyses WHERE id = ?`).run(req.params.id);
-  if (row) try { audit(db, { workspace_id: row.workspace_id, entity_type: 'analysis', entity_id: req.params.id, action: 'deleted', detail: row.kind }); } catch {}
+  const w = workspaceId(req);
+  const row = db.prepare(`SELECT workspace_id, kind, locked FROM analyses WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
+  if (!row) return res.status(404).json({ error: 'not_found' });
+  if (row.locked) return res.status(409).json({ error: 'analysis_locked', detail: 'This analysis is locked. Unlock it before deleting.' });
+  db.prepare(`DELETE FROM analyses WHERE id = ? AND workspace_id = ?`).run(req.params.id, w);
+  try { audit(db, { workspace_id: row.workspace_id, entity_type: 'analysis', entity_id: req.params.id, action: 'deleted', detail: row.kind }); } catch {}
   res.json({ ok: true });
 });
 
@@ -61,11 +64,12 @@ router.delete('/:id', (req, res) => {
 // (refresh) or deleted — the verified record is frozen. Every toggle is audited.
 router.post('/:id/lock', (req, res) => {
   const db = req.app.locals.db;
+  const w = workspaceId(req);
   const lock = req.body?.lock !== false;   // default true
-  const row = db.prepare(`SELECT workspace_id, kind FROM analyses WHERE id = ?`).get(req.params.id);
+  const row = db.prepare(`SELECT workspace_id, kind FROM analyses WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
-  db.prepare(`UPDATE analyses SET locked = ?, locked_at = ${lock ? 'unixepoch()' : 'NULL'} WHERE id = ?`)
-    .run(lock ? 1 : 0, req.params.id);
+  db.prepare(`UPDATE analyses SET locked = ?, locked_at = ${lock ? 'unixepoch()' : 'NULL'} WHERE id = ? AND workspace_id = ?`)
+    .run(lock ? 1 : 0, req.params.id, w);
   try { audit(db, { workspace_id: row.workspace_id, entity_type: 'analysis', entity_id: req.params.id, action: lock ? 'locked' : 'unlocked', detail: row.kind }); } catch {}
   res.json({ ok: true, locked: lock });
 });
@@ -111,30 +115,32 @@ router.get('/audit/log', (req, res) => {
 
 // Annotation — append to result_json.annotations (atomic via SQLite).
 router.patch('/:id/annotation', (req, res) => {
+  const w = workspaceId(req);
   const note = (req.body?.note || '').toString();
   if (!note) return res.status(400).json({ error: 'note_required' });
-  const row = req.app.locals.db.prepare(`SELECT result_json FROM analyses WHERE id = ?`)
-    .get(req.params.id);
+  const row = req.app.locals.db.prepare(`SELECT result_json FROM analyses WHERE id = ? AND workspace_id = ?`)
+    .get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
   const result = JSON.parse(row.result_json || '{}');
   result.annotations = result.annotations || [];
   result.annotations.push({ note, at: Date.now(), point: req.body?.point ?? null });
-  req.app.locals.db.prepare(`UPDATE analyses SET result_json = ? WHERE id = ?`)
-    .run(JSON.stringify(result), req.params.id);
+  req.app.locals.db.prepare(`UPDATE analyses SET result_json = ? WHERE id = ? AND workspace_id = ?`)
+    .run(JSON.stringify(result), req.params.id, w);
   res.json({ ok: true, annotations: result.annotations });
 });
 
 // Save as recipe — name + tags into result_json.recipe.
 router.patch('/:id/recipe', (req, res) => {
+  const w = workspaceId(req);
   const name = (req.body?.name || '').toString().slice(0, 120);
   if (!name) return res.status(400).json({ error: 'name_required' });
-  const row = req.app.locals.db.prepare(`SELECT result_json FROM analyses WHERE id = ?`)
-    .get(req.params.id);
+  const row = req.app.locals.db.prepare(`SELECT result_json FROM analyses WHERE id = ? AND workspace_id = ?`)
+    .get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
   const result = JSON.parse(row.result_json || '{}');
   result.recipe = { name, tags: req.body?.tags || [], saved_at: Date.now() };
-  req.app.locals.db.prepare(`UPDATE analyses SET result_json = ? WHERE id = ?`)
-    .run(JSON.stringify(result), req.params.id);
+  req.app.locals.db.prepare(`UPDATE analyses SET result_json = ? WHERE id = ? AND workspace_id = ?`)
+    .run(JSON.stringify(result), req.params.id, w);
   res.json({ ok: true });
 });
 
@@ -394,17 +400,20 @@ router.post('/import', async (req, res, next) => {
         rerunError = e.message || String(e);
       }
     }
+    // The analyses table has no separate hash columns — provenance lives
+    // inside result_json. Preserve the bundle's provenance there so the
+    // audit chain survives the round-trip.
+    if (a.provenance && result && typeof result === 'object' && !result.provenance) {
+      result.provenance = a.provenance;
+    }
     req.app.locals.db.prepare(
       `INSERT INTO analyses (id, workspace_id, dataset_id, kind, params_json, result_json,
-                              chart_storage_key, data_hash, params_hash, result_hash)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                              chart_storage_key)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
     ).run(id, w, datasetId, a.kind,
           JSON.stringify(a.params || {}),
           JSON.stringify(result),
-          result.chart_storage_key || null,
-          a.provenance?.data_hash || null,
-          a.provenance?.params_hash || null,
-          a.provenance?.result_hash || null);
+          result.chart_storage_key || null);
     try { audit(req.app.locals.db, { workspace_id: w, entity_type: 'analysis', entity_id: id, action: 'created', detail: a.kind }); } catch {}
     res.json({ analysis_id: id, dataset_id: datasetId,
                rerun_hashes_match: rerunHashesMatch,
@@ -436,6 +445,8 @@ router.get('/:id/bundle', async (req, res, next) => {
         } catch { rows = null; }
       }
     }
+    const parsedResult = JSON.parse(a.result_json || '{}');
+    const prov = parsedResult.provenance || {};
     const bundle = {
       bundle_version: 1,
       bundle_kind: 'conyso-bench-analysis',
@@ -444,12 +455,12 @@ router.get('/:id/bundle', async (req, res, next) => {
         id: a.id,
         kind: a.kind,
         params: JSON.parse(a.params_json || '{}'),
-        result: JSON.parse(a.result_json || '{}'),
+        result: parsedResult,
         provenance: {
-          data_hash:   a.data_hash || null,
-          params_hash: a.params_hash || null,
-          result_hash: a.result_hash || null,
-          computed_at: a.created_at || null,
+          data_hash:   prov.data_hash || null,
+          params_hash: prov.params_hash || null,
+          result_hash: prov.result_hash || null,
+          computed_at: prov.computed_at || a.created_at || null,
         },
       },
       dataset: ds ? {

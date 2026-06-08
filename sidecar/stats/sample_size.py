@@ -112,7 +112,7 @@ def anova(
                     "power_target": power,
                 }
             }
-    raise RuntimeError("required n_per_group exceeds 10,000 — effect too small")
+    raise ValueError("required n_per_group exceeds 10,000 — effect too small")
 
 
 def regression(
@@ -145,7 +145,7 @@ def regression(
                     "power_achieved": float(achieved),
                 }
             }
-    raise RuntimeError("required n exceeds 100,000")
+    raise ValueError("required n exceeds 100,000")
 
 
 def cpk_validation(
@@ -171,7 +171,7 @@ def cpk_validation(
                     "se_at_n": se,
                 }
             }
-    raise RuntimeError("required n exceeds 100,000 — estimate too close to target")
+    raise ValueError("required n exceeds 100,000 — estimate too close to target")
 
 
 # ─── Additional cases (parity push vs Minitab Power & Sample Size menu) ────
@@ -197,7 +197,7 @@ def chi_square(
             return {"summary": {"n": n, "df": df_chi, "effect_size_w": effect_size_w,
                                 "alpha": alpha, "power_target": power,
                                 "power_achieved": float(achieved)}}
-    raise RuntimeError("required n exceeds 100,000")
+    raise ValueError("required n exceeds 100,000")
 
 
 def equivalence_tost(

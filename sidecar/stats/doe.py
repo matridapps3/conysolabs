@@ -638,7 +638,7 @@ def multi_response_desirability(df: pd.DataFrame, factors: list[str],
             best_x = res.x
 
     if best_x is None:
-        raise RuntimeError("optimizer failed on all starts")
+        raise ValueError("optimizer failed on all starts")
 
     individuals = []
     for f in fits:

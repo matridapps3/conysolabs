@@ -53,7 +53,8 @@ router.get('/', (req, res) => {
 });
 
 router.get('/:id', (req, res) => {
-  const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ?`).get(req.params.id);
+  const w = workspaceId(req);
+  const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
   res.json({ report: rowToJsonObj(row, ['data_json', 'analyses_json']) });
 });
@@ -111,7 +112,8 @@ const PatchBody = z.object({
 });
 router.patch('/:id', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = PatchBody.parse(req.body);
     const data = body.data_json !== undefined
@@ -143,7 +145,8 @@ router.patch('/:id', (req, res, next) => {
 });
 
 router.delete('/:id', (req, res) => {
-  req.app.locals.db.prepare(`DELETE FROM reports WHERE id = ?`).run(req.params.id);
+  const w = workspaceId(req);
+  req.app.locals.db.prepare(`DELETE FROM reports WHERE id = ? AND workspace_id = ?`).run(req.params.id, w);
   res.json({ ok: true });
 });
 
@@ -151,26 +154,28 @@ router.delete('/:id', (req, res) => {
 const LinkBody = z.object({ analysis_id: z.string().min(1) });
 router.post('/:id/link-analysis', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = LinkBody.parse(req.body);
     const arr = JSON.parse(row.analyses_json || '[]');
     if (!arr.includes(body.analysis_id)) arr.push(body.analysis_id);
     req.app.locals.db.prepare(
-      `UPDATE reports SET analyses_json = ?, updated_at = unixepoch() WHERE id = ?`,
-    ).run(JSON.stringify(arr), req.params.id);
+      `UPDATE reports SET analyses_json = ?, updated_at = unixepoch() WHERE id = ? AND workspace_id = ?`,
+    ).run(JSON.stringify(arr), req.params.id, w);
     res.json({ ok: true, analyses: arr });
   } catch (e) { next(e); }
 });
 router.post('/:id/unlink-analysis', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = LinkBody.parse(req.body);
     const arr = JSON.parse(row.analyses_json || '[]').filter(x => x !== body.analysis_id);
     req.app.locals.db.prepare(
-      `UPDATE reports SET analyses_json = ?, updated_at = unixepoch() WHERE id = ?`,
-    ).run(JSON.stringify(arr), req.params.id);
+      `UPDATE reports SET analyses_json = ?, updated_at = unixepoch() WHERE id = ? AND workspace_id = ?`,
+    ).run(JSON.stringify(arr), req.params.id, w);
     res.json({ ok: true, analyses: arr });
   } catch (e) { next(e); }
 });
@@ -178,7 +183,8 @@ router.post('/:id/unlink-analysis', (req, res, next) => {
 // Duplicate (e.g. quarterly capability report).
 router.post('/:id/duplicate', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM reports WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const newId = crypto.randomUUID();
     req.app.locals.db.prepare(

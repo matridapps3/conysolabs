@@ -257,7 +257,14 @@ def hotelling_t2(df: pd.DataFrame, columns: list[str],
     mean = X.mean(axis=0)
     S = np.cov(X, rowvar=False, ddof=1)
     diff = (mean - mu0).reshape(-1, 1)
-    T2 = float(n * (diff.T @ linalg.inv(S) @ diff))
+    try:
+        S_inv = linalg.inv(S)
+    except Exception:
+        raise ValueError(
+            "hotelling_t2: the covariance matrix is singular — this happens when two "
+            "columns are perfectly correlated or a column is constant. Remove "
+            "redundant or constant columns and try again.")
+    T2 = float(n * (diff.T @ S_inv @ diff))
     F_stat = T2 * (n - p) / ((n - 1) * p)
     p_val = float(1 - sps.f.cdf(F_stat, p, n - p))
     return {"summary": {

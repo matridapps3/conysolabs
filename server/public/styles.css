@@ -2290,6 +2290,10 @@ details.provenance[open] summary::after { content: " −"; }
   cursor: pointer;
   transition: background var(--transition);
   display: flex; flex-direction: column; gap: 6px;
+  /* These cards are <a> elements — reset the browser's default link
+     underline and blue so the per-element theme colors below show through. */
+  color: inherit;
+  text-decoration: none;
 }
 .tool-index .tool-card:hover { background: var(--surface-2); }
 .tool-index .tool-card .tool-eyebrow {

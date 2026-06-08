@@ -88,7 +88,7 @@ def nonparametric(df: pd.DataFrame, column: str, p: float = 0.95, conf: float = 
                     best = {"j": j, "r": r, "lower": lo, "upper": up,
                             "width": width, "achieved_confidence": float(cov_prob)}
     if best is None:
-        raise RuntimeError(
+        raise ValueError(
             f"nonparametric tolerance: n={n} too small to achieve p={p} at conf={conf}. "
             f"Need n ≥ ~{math.ceil(np.log(1 - conf) / np.log(p))}."
         )

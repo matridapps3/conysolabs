@@ -74,7 +74,8 @@ router.get('/', (req, res) => {
 
 // Get one.
 router.get('/:id', (req, res) => {
-  const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+  const w = workspaceId(req);
+  const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
   if (!row) return res.status(404).json({ error: 'not_found' });
   res.json({ project: rowToJsonObj(row, ['phase_data']) });
 });
@@ -108,7 +109,8 @@ const PatchBody = z.object({
 });
 router.patch('/:id', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = PatchBody.parse(req.body);
     const current = JSON.parse(row.phase_data || '{}');
@@ -122,13 +124,14 @@ router.patch('/:id', (req, res, next) => {
               current_phase = COALESCE(?, current_phase),
               phase_data = ?,
               updated_at = unixepoch()
-        WHERE id = ?`,
+        WHERE id = ? AND workspace_id = ?`,
     ).run(
       body.name ?? null,
       body.description ?? null,
       body.current_phase ?? null,
       JSON.stringify(merged),
       req.params.id,
+      w,
     );
     const updated = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
     res.json({ project: rowToJsonObj(updated, ['phase_data']) });
@@ -136,7 +139,8 @@ router.patch('/:id', (req, res, next) => {
 });
 
 router.delete('/:id', (req, res) => {
-  req.app.locals.db.prepare(`DELETE FROM projects WHERE id = ?`).run(req.params.id);
+  const w = workspaceId(req);
+  req.app.locals.db.prepare(`DELETE FROM projects WHERE id = ? AND workspace_id = ?`).run(req.params.id, w);
   res.json({ ok: true });
 });
 
@@ -147,7 +151,8 @@ const AttachBody = z.object({
 });
 router.post('/:id/attach', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = AttachBody.parse(req.body);
     const data = JSON.parse(row.phase_data || '{}');
@@ -165,7 +170,8 @@ router.post('/:id/attach', (req, res, next) => {
 // Detach.
 router.post('/:id/detach', (req, res, next) => {
   try {
-    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const row = req.app.locals.db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!row) return res.status(404).json({ error: 'not_found' });
     const body = AttachBody.parse(req.body);
     const data = JSON.parse(row.phase_data || '{}');
@@ -184,7 +190,8 @@ router.post('/:id/detach', (req, res, next) => {
 router.post('/:id/recommend', async (req, res, next) => {
   try {
     const db = req.app.locals.db;
-    const proj = db.prepare(`SELECT * FROM projects WHERE id = ?`).get(req.params.id);
+    const w = workspaceId(req);
+    const proj = db.prepare(`SELECT * FROM projects WHERE id = ? AND workspace_id = ?`).get(req.params.id, w);
     if (!proj) return res.status(404).json({ error: 'not_found' });
     const phase = (req.body && req.body.phase) || proj.current_phase || 'define';
     const phaseData = JSON.parse(proj.phase_data || '{}');

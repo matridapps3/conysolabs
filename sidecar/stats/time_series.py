@@ -160,7 +160,7 @@ def auto_arima(df: pd.DataFrame, value_col: str, time_col: str | None = None,
                     except Exception:
                         continue
     if best is None:
-        raise RuntimeError("auto_arima: no order converged")
+        raise ValueError("auto_arima: no order converged")
     p, d, q, model = best
     result = arima(df, value_col, time_col, p=p, d=d, q=q, horizon=horizon)
     result["summary"]["auto_search"] = sorted(tried, key=lambda r: r["AIC"])[:10]
